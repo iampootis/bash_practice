@@ -1,34 +1,21 @@
 #!/bin/bash
 
 
-if [ -z "$*" ]
-then
-echo "No options found!"
-exit 1
-fi
-
-while getopts "g:h:p:n:" opt; do
-case $opt in
-g) echo "User groups: $OPTARG"
-user_groups="$OPTARG"
-;;
-h) echo "User's home directory: $OPTARG"
-home_dir="$OPTARG"
-;;
-p) echo "Password entered"
-password="$OPTARG"
-;;
-n) echo "User name: $OPTARG"
-user_name="$OPTARG"
-;;
-*) echo "No reasonable options found!";;
-esac
-done
-
-
 function add_user() {
-  useradd -G "$1" -d "$2" -p "$(openssl passwd password)" "$4"  # Groups, home_dir, password's hash, user_name
+  sudo useradd -G "$1" -d "$2" -p "$(openssl passwd "$3")" "$4"  # Groups, home_dir, password's hash, user_name
 }
 
-# printf "\n$user_groups\n$home_dir\n$password\n$user_name\n"
-add_user "$user_groups" "$home_dir" "$password" "$user_name"
+for user_info in "$@"; do
+  IFS=";" read -a myarray <<< $user_info
+  echo "Groups: ${myarray[0]}"
+  user_groups=${myarray[0]}
+  echo "User's home directory: ${myarray[1]}"
+  user_homedir="${myarray[1]}"
+  echo "Password: ${myarray[2]}"
+  user_password="${myarray[2]}"
+  echo "Name: ${myarray[3]}"
+  user_name="${myarray[3]}"
+  printf "\n"
+
+  add_user "$user_groups" "$user_homedir$user_name" "$user_password" "$user_name"
+done
